@@ -1,0 +1,8 @@
+[package]
+name = "oven"
+version = "0.1.0"
+authors = ["XMPPwocky <nttheis@gmail.com>"]
+
+[dependencies]
+cookie = "^0.1.2"
+iron = "^0.2.2"
