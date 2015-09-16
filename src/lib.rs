@@ -12,6 +12,11 @@ pub fn create(signing_key: Vec<u8>) -> (OvenBefore, OvenAfter) {
     (OvenBefore { signing_key: signing_key }, OvenAfter)
 }
 
+/// Call when you create a Response, to deal with cookies
+pub fn init_response(resp: &mut Response, signing_key: &[u8]) {
+    resp.extensions.insert::<ResponseCookieJar>(cookie::CookieJar::new(signing_key));
+}
+
 pub struct RequestCookieJar;
 impl iron::typemap::Key for RequestCookieJar {
     type Value = cookie::CookieJar<'static>;
