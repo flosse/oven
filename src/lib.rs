@@ -3,10 +3,14 @@ extern crate iron;
 
 use iron::prelude::*;
 
-pub struct Oven {
-    pub signing_key: Vec<u8>,
+pub struct OvenBefore {
+    signing_key: Vec<u8>,
 }
+pub struct OvenAfter;
 
+pub fn create(signing_key: Vec<u8>) -> (OvenBefore, OvenAfter) {
+    (OvenBefore { signing_key: signing_key }, OvenAfter)
+}
 
 pub struct RequestCookieJar;
 impl iron::typemap::Key for RequestCookieJar {
@@ -18,7 +22,7 @@ impl iron::typemap::Key for ResponseCookieJar {
     type Value = cookie::CookieJar<'static>;
 }
 
-impl iron::BeforeMiddleware for Oven {
+impl iron::BeforeMiddleware for OvenBefore {
     fn before(&self, req: &mut Request) -> IronResult<()> {
         req.extensions
            .insert::<RequestCookieJar>(match req.headers.get::<iron::headers::Cookie>() {
@@ -35,7 +39,7 @@ impl iron::BeforeMiddleware for Oven {
 }
 
 
-impl iron::AfterMiddleware for Oven {
+impl iron::AfterMiddleware for OvenAfter {
     fn after(&self, _: &mut Request, mut res: Response) -> IronResult<Response> {
         if let Some(cookiejar) = res.extensions.get::<ResponseCookieJar>() {
             res.headers.set(iron::headers::SetCookie(cookiejar.delta()));
