@@ -50,7 +50,7 @@ impl plugin::Plugin<Response> for ResponseCookies {
     type Error = Error;
 
     fn eval(res: &mut Response) -> Result<HashMap<String, cookie::Cookie>, Error> {
-        HashMap::new()
+        Ok(HashMap::new())
     }
 }
 
@@ -87,7 +87,7 @@ impl iron::AfterMiddleware for OvenAfter {
         let cookiejar = cookie::CookieJar::new(&self.signing_key);
         if let Some(cookies) = res.extensions.get::<ResponseCookies>() {
             for v in cookies.values().cloned() {
-                cookiejar.add(v);
+                cookiejar.signed().add(v);
             }
 
             res.headers.set(iron::headers::SetCookie(cookiejar.delta()));
