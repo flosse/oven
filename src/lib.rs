@@ -1,43 +1,61 @@
 extern crate cookie;
 extern crate iron;
+extern crate plugin;
 
+use std::collections::HashMap;
+use std::sync::Arc;
 use iron::prelude::*;
 
 pub struct OvenBefore {
-    signing_key: Vec<u8>,
+    signing_key: Arc<Vec<u8>>,
 }
-pub struct OvenAfter;
-
-pub fn create(signing_key: Vec<u8>) -> (OvenBefore, OvenAfter) {
-    (OvenBefore { signing_key: signing_key }, OvenAfter)
+pub struct OvenAfter {
+    signing_key: Arc<Vec<u8>>
 }
 
-/// Call when you create a Response, to deal with cookies
-pub fn init_response(resp: &mut Response, signing_key: &[u8]) {
-    resp.extensions.insert::<ResponseCookieJar>(cookie::CookieJar::new(signing_key));
+pub enum Error {
+    NoSigningKey
 }
 
-pub struct RequestCookieJar;
-impl iron::typemap::Key for RequestCookieJar {
-    type Value = cookie::CookieJar<'static>;
+impl<'a, 'b> plugin::Plugin<Request<'a, 'b>> for RequestCookies { 
+    type Error = Error; 
+
+    fn eval(req: &mut Request) -> Result<HashMap<String, cookie::Cookie>, Error> {
+        // try! doesn't work here for some reason
+        let signing_key = match req.extensions.get::<SigningKey>() {
+            Some(key) => key.clone(),
+            None => return Err(Error::NoSigningKey)
+        };
+
+        let jar = match req.headers.get::<iron::headers::Cookie>() {
+            Some(cookies) => cookies.to_cookie_jar(&signing_key),
+            None => cookie::CookieJar::new(&signing_key)
+        };
+
+        Ok(jar.signed().iter().map(|c| (c.name.clone(), c)).collect())
+    }
 }
 
-pub struct ResponseCookieJar;
-impl iron::typemap::Key for ResponseCookieJar {
-    type Value = cookie::CookieJar<'static>;
+// Private type stashed in Request/Response extensions
+struct SigningKey;
+impl iron::typemap::Key for SigningKey {
+    type Value = Arc<Vec<u8>>;
+}
+
+pub struct RequestCookies;
+impl iron::typemap::Key for RequestCookies {
+    type Value = HashMap<String, cookie::Cookie>; 
+}
+
+pub struct ResponseCookies;
+impl iron::typemap::Key for ResponseCookies {
+    type Value = HashMap<String, cookie::Cookie>;
 }
 
 impl iron::BeforeMiddleware for OvenBefore {
     fn before(&self, req: &mut Request) -> IronResult<()> {
         req.extensions
-           .insert::<RequestCookieJar>(match req.headers.get::<iron::headers::Cookie>() {
-               Some(cookies) => {
-                   cookies.to_cookie_jar(&self.signing_key)
-               }
-               None => {
-                   cookie::CookieJar::new(&self.signing_key)
-               }
-           });
+           .insert::<SigningKey>(self.signing_key.clone());
 
         Ok(())
     }
@@ -46,11 +64,17 @@ impl iron::BeforeMiddleware for OvenBefore {
 
 impl iron::AfterMiddleware for OvenAfter {
     fn after(&self, _: &mut Request, mut res: Response) -> IronResult<Response> {
-        if let Some(cookiejar) = res.extensions.get::<ResponseCookieJar>() {
+        // shouldn't be any other Set-Cookie headers
+        debug_assert!(!res.headers.has::<iron::headers::SetCookie>());
+
+        let cookiejar = cookie::CookieJar::new(&self.signing_key);
+        if let Some(cookies) = res.extensions.get::<ResponseCookies>() {
+            for v in cookies.values().cloned() {
+                cookiejar.add(v);
+            }
+
             res.headers.set(iron::headers::SetCookie(cookiejar.delta()));
         } else {
-            // shouldn't be any other Set-Cookie headers
-            debug_assert!(!res.headers.has::<iron::headers::SetCookie>());
         }
         Ok(res)
     }
