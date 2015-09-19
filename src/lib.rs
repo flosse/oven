@@ -45,6 +45,15 @@ impl<'a, 'b> plugin::Plugin<Request<'a, 'b>> for RequestCookies {
     }
 }
 
+// Is this a reasonable thing to be doing?
+impl plugin::Plugin<Response> for ResponseCookies {
+    type Error = Error;
+
+    fn eval(res: &mut Response) -> Result<HashMap<String, cookie::Cookie>, Error> {
+        HashMap::new()
+    }
+}
+
 // Private type stashed in Request/Response extensions
 struct SigningKey;
 impl iron::typemap::Key for SigningKey {
@@ -65,7 +74,6 @@ impl iron::BeforeMiddleware for OvenBefore {
     fn before(&self, req: &mut Request) -> IronResult<()> {
         req.extensions
            .insert::<SigningKey>(self.signing_key.clone());
-
         Ok(())
     }
 }
