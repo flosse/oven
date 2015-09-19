@@ -13,6 +13,15 @@ pub struct OvenAfter {
     signing_key: Arc<Vec<u8>>
 }
 
+pub fn new(signing_key: Vec<u8>) -> (OvenBefore, OvenAfter) {
+    let arc = Arc::new(signing_key);
+
+    let before = OvenBefore { signing_key: arc.clone() };
+    let after = OvenAfter { signing_key: arc };
+
+    (before, after)
+}
+
 pub enum Error {
     NoSigningKey
 }
