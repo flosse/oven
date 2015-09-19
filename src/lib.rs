@@ -32,7 +32,7 @@ impl<'a, 'b> plugin::Plugin<Request<'a, 'b>> for RequestCookies {
             None => cookie::CookieJar::new(&signing_key)
         };
 
-        Ok(jar.signed().iter().map(|c| (c.name.clone(), c)).collect())
+        Ok(jar.signed().iter().collect())
     }
 }
 
@@ -44,12 +44,12 @@ impl iron::typemap::Key for SigningKey {
 
 pub struct RequestCookies;
 impl iron::typemap::Key for RequestCookies {
-    type Value = HashMap<String, cookie::Cookie>; 
+    type Value = HashSet<cookie::Cookie>; 
 }
 
 pub struct ResponseCookies;
 impl iron::typemap::Key for ResponseCookies {
-    type Value = HashMap<String, cookie::Cookie>;
+    type Value = HashMap<cookie::Cookie>;
 }
 
 impl iron::BeforeMiddleware for OvenBefore {
@@ -69,7 +69,7 @@ impl iron::AfterMiddleware for OvenAfter {
 
         let cookiejar = cookie::CookieJar::new(&self.signing_key);
         if let Some(cookies) = res.extensions.get::<ResponseCookies>() {
-            for v in cookies.values().cloned() {
+            for i in cookies.cloned() {
                 cookiejar.add(v);
             }
 
