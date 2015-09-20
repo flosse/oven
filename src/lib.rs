@@ -50,13 +50,13 @@ impl ResponseExt for Response {
 
 pub trait RequestExt {
     /// Extension method to simplify getting cookies.
-    fn get_cookie<'c, 'd>(&'c  mut self, name: &'d str) -> Result<Option<&'c cookie::Cookie>, Error>;
+    fn get_cookie<'c, 'd>(&'c  mut self, name: &'d str) -> Option<&'c cookie::Cookie>;
 }
 
 
 impl<'a, 'b> RequestExt for Request<'a, 'b> { 
-    fn get_cookie<'c, 'd>(&'c  mut self, name: &'d str) -> Result<Option<&'c cookie::Cookie>, Error> {
-        Ok(try!(self.get_mut::<RequestCookies>()).get(name))
+    fn get_cookie<'c, 'd>(&'c  mut self, name: &'d str) -> Option<&'c cookie::Cookie> {
+        self.get_mut::<RequestCookies>().unwrap().get(name)
     }
 }
 impl<'a, 'b> plugin::Plugin<Request<'a, 'b>> for RequestCookies {
