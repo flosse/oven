@@ -3,7 +3,7 @@ simple cookie middleware for Iron
 
 ```rust
 
-extern crate cookie; // [this one](https://crates.io/crates/cookie)
+extern crate cookie;
 extern crate oven;
 
 use oven::prelude::*;
