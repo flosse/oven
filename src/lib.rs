@@ -29,33 +29,31 @@ pub enum Error {
 
 
 pub mod prelude {
-    pub use ::ResponseExt;
-    pub use ::RequestExt;
+    pub use ResponseExt;
+    pub use RequestExt;
 }
 
 pub trait ResponseExt {
     /// Extension method to simplify setting cookies.
-    fn set_cookie(&mut self, cookie: cookie::Cookie) -> Result<(), Error>;
+    fn set_cookie(&mut self, cookie: cookie::Cookie);
 }
 
 impl ResponseExt for Response {
-    fn set_cookie(&mut self, cookie: cookie::Cookie) -> Result<(), Error> {
+    fn set_cookie(&mut self, cookie: cookie::Cookie) {
         // FIXME: what if there's already a cookie by this name?
 
-        try!(self.get_mut::<ResponseCookies>()).insert(cookie.name.clone(), cookie);
-
-        Ok(())
+        self.get_mut::<ResponseCookies>().unwrap().insert(cookie.name.clone(), cookie);
     }
 }
 
 pub trait RequestExt {
     /// Extension method to simplify getting cookies.
-    fn get_cookie<'c, 'd>(&'c  mut self, name: &'d str) -> Option<&'c cookie::Cookie>;
+    fn get_cookie<'c, 'd>(&'c mut self, name: &'d str) -> Option<&'c cookie::Cookie>;
 }
 
 
-impl<'a, 'b> RequestExt for Request<'a, 'b> { 
-    fn get_cookie<'c, 'd>(&'c  mut self, name: &'d str) -> Option<&'c cookie::Cookie> {
+impl<'a, 'b> RequestExt for Request<'a, 'b> {
+    fn get_cookie<'c, 'd>(&'c mut self, name: &'d str) -> Option<&'c cookie::Cookie> {
         self.get_mut::<RequestCookies>().unwrap().get(name)
     }
 }
