@@ -22,6 +22,7 @@ pub fn new(signing_key: Vec<u8>) -> (OvenBefore, OvenAfter) {
     (before, after)
 }
 
+#[derive(Debug, Copy, Clone)]
 pub enum Error {
     NoSigningKey,
 }
