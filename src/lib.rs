@@ -10,7 +10,7 @@ pub struct OvenBefore {
     signing_key: Arc<Vec<u8>>,
 }
 pub struct OvenAfter {
-    signing_key: Arc<Vec<u8>>
+    signing_key: Arc<Vec<u8>>,
 }
 
 pub fn new(signing_key: Vec<u8>) -> (OvenBefore, OvenAfter) {
@@ -23,22 +23,54 @@ pub fn new(signing_key: Vec<u8>) -> (OvenBefore, OvenAfter) {
 }
 
 pub enum Error {
-    NoSigningKey
+    NoSigningKey,
 }
 
-impl<'a, 'b> plugin::Plugin<Request<'a, 'b>> for RequestCookies { 
-    type Error = Error; 
+
+pub mod prelude {
+    pub use ::ResponseExt;
+    pub use ::RequestExt;
+}
+
+pub trait ResponseExt {
+    /// Extension method to simplify setting cookies.
+    fn set_cookie(&mut self, cookie: cookie::Cookie) -> Result<(), Error>;
+}
+
+impl ResponseExt for Response {
+    fn set_cookie(&mut self, cookie: cookie::Cookie) -> Result<(), Error> {
+        // FIXME: what if there's already a cookie by this name?
+
+        try!(self.get_mut::<ResponseCookies>()).insert(cookie.name.clone(), cookie);
+
+        Ok(())
+    }
+}
+
+pub trait RequestExt {
+    /// Extension method to simplify getting cookies.
+    fn get_cookie<'c, 'd>(&'c  mut self, name: &'d str) -> Result<Option<&'c cookie::Cookie>, Error>;
+}
+
+
+impl<'a, 'b> RequestExt for Request<'a, 'b> { 
+    fn get_cookie<'c, 'd>(&'c  mut self, name: &'d str) -> Result<Option<&'c cookie::Cookie>, Error> {
+        Ok(try!(self.get_mut::<RequestCookies>()).get(name))
+    }
+}
+impl<'a, 'b> plugin::Plugin<Request<'a, 'b>> for RequestCookies {
+    type Error = Error;
 
     fn eval(req: &mut Request) -> Result<HashMap<String, cookie::Cookie>, Error> {
         // try! doesn't work here for some reason
         let signing_key = match req.extensions.get::<SigningKey>() {
             Some(key) => key.clone(),
-            None => return Err(Error::NoSigningKey)
+            None => return Err(Error::NoSigningKey),
         };
 
         let jar = match req.headers.get::<iron::headers::Cookie>() {
             Some(cookies) => cookies.to_cookie_jar(&signing_key),
-            None => cookie::CookieJar::new(&signing_key)
+            None => cookie::CookieJar::new(&signing_key),
         };
 
         Ok(jar.signed().iter().map(|c| (c.name.clone(), c)).collect())
@@ -49,7 +81,7 @@ impl<'a, 'b> plugin::Plugin<Request<'a, 'b>> for RequestCookies {
 impl plugin::Plugin<Response> for ResponseCookies {
     type Error = Error;
 
-    fn eval(res: &mut Response) -> Result<HashMap<String, cookie::Cookie>, Error> {
+    fn eval(_res: &mut Response) -> Result<HashMap<String, cookie::Cookie>, Error> {
         Ok(HashMap::new())
     }
 }
@@ -62,7 +94,7 @@ impl iron::typemap::Key for SigningKey {
 
 pub struct RequestCookies;
 impl iron::typemap::Key for RequestCookies {
-    type Value = HashMap<String, cookie::Cookie>; 
+    type Value = HashMap<String, cookie::Cookie>;
 }
 
 pub struct ResponseCookies;
@@ -72,8 +104,7 @@ impl iron::typemap::Key for ResponseCookies {
 
 impl iron::BeforeMiddleware for OvenBefore {
     fn before(&self, req: &mut Request) -> IronResult<()> {
-        req.extensions
-           .insert::<SigningKey>(self.signing_key.clone());
+        req.extensions.insert::<SigningKey>(self.signing_key.clone());
         Ok(())
     }
 }
