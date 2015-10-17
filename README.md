@@ -14,7 +14,7 @@ fn initialize_my_webapp_pls() {
 }
 
 fn handle_some_requests(req: &mut Request) {
-  let foocookie = req.get_cookie("foo"); // foo = Result<Option<cookie::Cookie>, oven::Error>
+  let foocookie = req.get_cookie("foo"); // foo = Option<cookie::Cookie>
   // clients can't tamper with foo- it's signed when set and verified when loaded.
   // invalid signatures are equivalent to the cookie not existing.
   let mut resp = Response::new();
