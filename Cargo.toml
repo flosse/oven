@@ -1,6 +1,6 @@
 [package]
 name = "oven"
-version = "0.2.16"
+version = "0.2.17"
 authors = ["XMPPwocky <nttheis@gmail.com>"]
 repository = "https://github.com/XMPPwocky/oven"
 description = "Simple cookie management for Iron"
