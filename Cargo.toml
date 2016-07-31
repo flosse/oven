@@ -1,8 +1,8 @@
 [package]
 name = "oven"
 version = "0.4.0"
-authors = ["XMPPwocky <nttheis@gmail.com>"]
-repository = "https://github.com/XMPPwocky/oven"
+authors = ["XMPPwocky <nttheis@gmail.com>", "Markus Kohlhase <mail@markus-kohlhase.de>"]
+repository = "https://github.com/flosse/oven"
 description = "Simple cookie management for Iron"
 license = "MIT"
 
