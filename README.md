@@ -6,7 +6,7 @@ simple cookie middleware for Iron
 extern crate hyper;
 extern crate oven;
 
-use hyper::header::CookiePair;
+use iron::headers::CookiePair;
 use oven::prelude::*;
 
 fn initialize_my_webapp_pls() {
