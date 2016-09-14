@@ -1,15 +1,12 @@
 [package]
 name = "oven"
-version = "0.4.0"
+version = "1.0.0"
 authors = ["XMPPwocky <nttheis@gmail.com>", "Markus Kohlhase <mail@markus-kohlhase.de>"]
 repository = "https://github.com/flosse/oven"
 description = "Simple cookie management for Iron"
 license = "MIT"
 
 [dependencies]
+hyper = "^0.9.10"
 iron = "^0.4.0"
 plugin = "^0.2.6"
-
-[dependencies.cookie]
-version = "^0.2.2"
-features = ["secure"]
