@@ -3,9 +3,10 @@ simple cookie middleware for Iron
 
 ```rust
 
-extern crate cookie;
+extern crate hyper;
 extern crate oven;
 
+use iron::headers::CookiePair;
 use oven::prelude::*;
 
 fn initialize_my_webapp_pls() {
@@ -14,10 +15,10 @@ fn initialize_my_webapp_pls() {
 }
 
 fn handle_some_requests(req: &mut Request) {
-  let foocookie = req.get_cookie("foo"); // foo = Option<cookie::Cookie>
+  let foocookie = req.get_cookie("foo"); // foo = Option<&CookiePair>
   // clients can't tamper with foo- it's signed when set and verified when loaded.
   // invalid signatures are equivalent to the cookie not existing.
   let mut resp = Response::new();
-  resp.set_cookie(cookie::Cookie::new("foo", "new and interesting value of foo!"));
+  resp.set_cookie("foo", "new and interesting value of foo!");
 }
 ```
