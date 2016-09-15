@@ -36,14 +36,13 @@ pub mod prelude {
 
 pub trait ResponseExt {
     /// Extension method to simplify setting cookies.
-    fn set_cookie(&mut self, name: &str, value: &str);
+    fn set_cookie(&mut self, cookie: CookiePair);
 }
 
 impl ResponseExt for Response {
-    fn set_cookie(&mut self, name: &str, value: &str) {
+    fn set_cookie(&mut self, cookie: CookiePair) {
         // FIXME: what if there's already a cookie by this name?
-        let cookie = CookiePair::new(name.to_owned(), value.to_owned());
-        self.get_mut::<ResponseCookies>().unwrap().insert(name.to_string(), cookie);
+        self.get_mut::<ResponseCookies>().unwrap().insert(cookie.name.to_string(), cookie);
     }
 }
 
